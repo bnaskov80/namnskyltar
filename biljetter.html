@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fritidståget - Bild-app</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Roboto+Condensed:wght@400;700&display=swap');
 
         body {
             font-family: sans-serif;
@@ -89,20 +89,24 @@
 
         /* --- TEXT INUTI SVG --- */
         .svg-name-text {
-            font-family: 'Courier Prime', monospace;
-            font-size: 22px;
+            font-family: 'Oswald', sans-serif;
+            font-size: 24px;
             font-weight: bold;
             color: #111;
             fill: #111; /* 'fill' är färgen för SVG-text */
         }
         .svg-number-text {
-            font-family: 'Courier Prime', monospace;
+            font-family: 'Oswald', sans-serif;
+            font-size: 24px;
+            font-weight: bold;
+            color: #111;
+            fill: #111;
         }
         .ticket-number {
             position: absolute;
-            bottom: 9%;            /* Placerar numret nära botten */
-            right: 17%;             /* Placerar numret nära högerkant */
-            font-family: 'Courier Prime', monospace;
+            bottom: 11%;            /* Placerar numret nära botten */
+            right: 15%;             /* Placerar numret nära högerkant */
+            font-family: 'Oswald', sans-serif;
             font-size: 11px;
             font-weight: bold;
             color: #111;
@@ -166,7 +170,7 @@
             ruler.style.position = 'absolute';
             ruler.style.visibility = 'hidden';
             ruler.style.whiteSpace = 'nowrap'; // Viktigt för att mäta en enda rad
-            ruler.style.fontFamily = "'Courier Prime', monospace";
+            ruler.style.fontFamily = "'Oswald', sans-serif";
             ruler.style.fontSize = '22px';
             ruler.style.fontWeight = 'bold';
             ruler.textContent = name;
@@ -175,7 +179,7 @@
             const textWidth = ruler.offsetWidth;
             document.body.removeChild(ruler);
 
-            const MAX_WIDTH = 210;
+            const MAX_WIDTH = 105; // Justerat för att ge lite mer marginal på sidorna
             let textLengthAttribute = ''; // Tom som standard
             if (textWidth > MAX_WIDTH) {
                 // Lägg bara till attributet om texten är för lång
@@ -192,7 +196,7 @@
                     <text x="65%" y="62%" dominant-baseline="middle" text-anchor="middle" class="svg-name-text" ${textLengthAttribute}>
                         ${name}
                     </text>
-                    <text x="83%" y="91%" dominant-baseline="middle" text-anchor="middle" class="svg-number-text" style="font-size: 11px; font-weight: bold; fill: #111;">
+                    <text x="75%" y="85%" dominant-baseline="middle" text-anchor="middle" class="svg-number-text" style="font-size: 11px; font-weight: bold; fill: #111;">
                         NR: ${counters[groupKey]}
                     </text>
                 </svg>
