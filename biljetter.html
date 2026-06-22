@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fritidståget - Bild-app</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap');
+
+        body {
+            font-family: sans-serif;
+            background-color: #e0e0e0;
+            margin: 0;
+            padding: 20px;
+        }
+
+        /* --- KONTROLLPANEL --- */
+        .controls {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            text-align: center;
+        }
+
+        .controls h1 { margin-top: 0; color: #333; }
+        
+        .input-group {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        input[type="text"], select {
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #aaa;
+            border-radius: 4px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        button.print-btn { background-color: #2980b9; }
+        button.clear-btn { background-color: #c0392b; }
+        button:hover { opacity: 0.9; }
+
+        /* --- UTSKRIFTSYTA --- */
+        #print-area {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        /* --- BILJETTDELEN --- */
+        .ticket {
+            width: 350px;       /* Justera dessa värden om din bild har andra proportioner */
+            height: 180px;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            position: relative;
+            box-shadow: 3px 3px 8px rgba(0,0,0,0.2);
+            page-break-inside: avoid;
+        }
+
+        /* Välj rätt bakgrundsbild beroende på vald klass i JS */
+        .bg-loket { background-image: url('loket.png'); }
+        .bg-bla { background-image: url('bla.png'); }
+        .bg-roda { background-image: url('roda.png'); }
+        .bg-gula { background-image: url('gula.png'); }
+        .bg-grona { background-image: url('grona.png'); }
+        .bg-lila { background-image: url('lila.png'); }
+
+        /* --- TEXTPLACERING OVANPÅ BILDEN --- */
+        /* Dessa värden (top, left) kan du behöva justera marginellt 
+           så texten hamnar exakt i den vita rutan på din utskrift */
+        
+        .student-name {
+            position: absolute;
+            top: 55%;               /* Flyttar namnet neråt (procent av höjden) */
+            left: 35%;              /* Flyttar namnet åt höger (procent av bredden) */
+            width: 60%;             /* Bredden på textytan */
+            text-align: center;
+            font-family: 'Courier Prime', monospace;
+            font-size: 22px;
+            font-weight: bold;
+            color: #111;
+        }
+
+        .ticket-number {
+            position: absolute;
+            bottom: 9%;            /* Placerar numret nära botten */
+            right: 17%;             /* Placerar numret nära högerkant */
+            font-family: 'Courier Prime', monospace;
+            font-size: 11px;
+            font-weight: bold;
+            color: #111;
+        }
+
+        /* --- UTSKRIFTSREGLER --- */
+        @media print {
+            body { background-color: white; padding: 0; }
+            .controls { display: none; }
+            .ticket { box-shadow: none; border: 1px dashed #ccc; } /* Liten hjälplinje vid klippning */
+            #print-area { gap: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="controls no-print">
+        <h1>🚂 Biljettautomat med riktiga bilder</h1>
+        <div class="input-group">
+            <input type="text" id="studentName" placeholder="Elevens namn" autocomplete="off">
+            <select id="trainGroup">
+                <option value="loket">Loket</option>
+                <option value="bla">Blå vagnen</option>
+                <option value="roda">Röda vagnen</option>
+                <option value="gula">Gula vagnen</option>
+                <option value="grona">Gröna vagnen</option>
+                <option value="lila">Lila vagnen</option>
+            </select>
+            <button onclick="addTicket()">Skapa biljett</button>
+        </div>
+        <div>
+            <button class="print-btn" onclick="window.print()">🖨️ Skriv ut A4</button>
+            <button class="clear-btn" onclick="clearTickets()">🗑️ Rensa alla</button>
+        </div>
+        <p style="font-size: 12px; margin-top: 15px; color: #666;">
+            Tips: Om namnet inte hamnar exakt i den vita rutan, öppna HTML-filen i Anteckningar och ändra procentvärdena under <code>.student-name { top: 45%; left: 20%; }</code>.
+        </p>
+    </div>
+
+    <div id="print-area">
+        </div>
+
+    <script>
+        const counters = {
+            loket: 1001, bla: 1001, roda: 1001,
+            gula: 1001, grona: 1001, lila: 1001
+        };
+
+        function addTicket() {
+            const nameInput = document.getElementById("studentName");
+            const name = nameInput.value.trim();
+            const groupKey = document.getElementById("trainGroup").value;
+
+            if (name === "") {
+                alert("Vänligen fyll i ett namn!");
+                return;
+            }
+
+            const currentNumber = counters[groupKey]++;
+
+            // Skapar biljetten. Endast bilden och den placerade texten är med.
+            const ticketHTML = `
+                <div class="ticket bg-${groupKey}">
+                    <div class="student-name">${name}</div>
+                    <div class="ticket-number">NR: ${currentNumber}</div>
+                </div>
+            `;
+
+            document.getElementById("print-area").insertAdjacentHTML('beforeend', ticketHTML);
+            
+            nameInput.value = "";
+            nameInput.focus();
+        }
+
+        function clearTickets() {
+            if(confirm("Vill du ta bort alla biljetter från skärmen?")) {
+                document.getElementById("print-area").innerHTML = "";
+            }
+        }
+
+        document.getElementById("studentName").addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                addTicket();
+            }
+        });
+    </script>
+</body>
+</html>
