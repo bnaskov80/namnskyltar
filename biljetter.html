@@ -87,22 +87,17 @@
         .bg-grona { background-image: url('grona.png'); }
         .bg-lila { background-image: url('lila.png'); }
 
-        /* --- TEXTPLACERING OVANPÅ BILDEN --- */
-        /* Dessa värden (top, left) kan du behöva justera marginellt 
-           så texten hamnar exakt i den vita rutan på din utskrift */
-        
-        .student-name {
-            position: absolute;
-            top: 55%;               /* Flyttar namnet neråt (procent av höjden) */
-            left: 35%;              /* Flyttar namnet åt höger (procent av bredden) */
-            width: 60%;             /* Bredden på textytan */
-            text-align: center;
+        /* --- TEXT INUTI SVG --- */
+        .svg-name-text {
             font-family: 'Courier Prime', monospace;
             font-size: 22px;
             font-weight: bold;
             color: #111;
+            fill: #111; /* 'fill' är färgen för SVG-text */
         }
-
+        .svg-number-text {
+            font-family: 'Courier Prime', monospace;
+        }
         .ticket-number {
             position: absolute;
             bottom: 9%;            /* Placerar numret nära botten */
@@ -166,37 +161,47 @@
                 return;
             }
 
+            // --- Mät textens sanna bredd för att avgöra om den behöver komprimeras ---
+            const ruler = document.createElement('span');
+            ruler.style.position = 'absolute';
+            ruler.style.visibility = 'hidden';
+            ruler.style.whiteSpace = 'nowrap'; // Viktigt för att mäta en enda rad
+            ruler.style.fontFamily = "'Courier Prime', monospace";
+            ruler.style.fontSize = '22px';
+            ruler.style.fontWeight = 'bold';
+            ruler.textContent = name;
+            document.body.appendChild(ruler);
+            
+            const textWidth = ruler.offsetWidth;
+            document.body.removeChild(ruler);
+
+            const MAX_WIDTH = 210;
+            let textLengthAttribute = ''; // Tom som standard
+            if (textWidth > MAX_WIDTH) {
+                // Lägg bara till attributet om texten är för lång
+                textLengthAttribute = `textLength="${MAX_WIDTH}" lengthAdjust="spacingAndGlyphs"`;
+            }
+            // --- Slut på mätning ---
+
             const printArea = document.getElementById("print-area");
 
-            // Skapar biljetten och lägger till den i DOM:en
+            // Skapar biljetten med SVG
             const ticketHTML = `
-                <div class="ticket bg-${groupKey}">
-                    <div class="student-name">${name}</div>
-                    <div class="ticket-number">NR: ${counters[groupKey]}</div>
-                </div>
+                <svg width="350" height="180" class="ticket">
+                    <image href="${groupKey}.png" height="100%" width="100%"/>
+                    <text x="65%" y="62%" dominant-baseline="middle" text-anchor="middle" class="svg-name-text" ${textLengthAttribute}>
+                        ${name}
+                    </text>
+                    <text x="83%" y="91%" dominant-baseline="middle" text-anchor="middle" class="svg-number-text" style="font-size: 11px; font-weight: bold; fill: #111;">
+                        NR: ${counters[groupKey]}
+                    </text>
+                </svg>
             `;
             printArea.insertAdjacentHTML('beforeend', ticketHTML);
             counters[groupKey]++;
 
-            // Hämta det nyskapade namnelementet (det är det sista i listan)
-            const newNameElement = printArea.lastElementChild.querySelector('.student-name');
-
-            // Anropa justeringsfunktionen med en minimal fördröjning för att låta webbläsaren rendera först
-            setTimeout(() => adjustFontSize(newNameElement), 0);
-
             nameInput.value = "";
             nameInput.focus();
-        }
-
-        function adjustFontSize(element) {
-            const computedStyle = window.getComputedStyle(element);
-            let fontSize = parseFloat(computedStyle.fontSize);
-
-            // Minska textstorleken tills texten passar i sin container
-            while (element.scrollWidth > element.clientWidth && fontSize > 10) {
-                fontSize--;
-                element.style.fontSize = fontSize + 'px';
-            }
         }
 
         function clearTickets() {
